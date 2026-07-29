@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DisChat</title>
+<style>
+  :root{
+    --bg-deepest:#0A0912;
+    --bg-rail:#100D1B;
+    --bg-panel:#161225;
+    --bg-chat:#1B1729;
+    --bg-elevated:#221C34;
+    --bg-input:#2A2340;
+    --border:#2C2540;
+    --accent:#8B5CF6;
+    --accent-2:#2DD4BF;
+    --text-primary:#EFEBFB;
+    --text-muted:#9691B0;
+    --text-faint:#655E80;
+    --danger:#F0567B;
+    --success:#4ADE80;
+    --pro:#F5B942;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg-deepest);
+    color:var(--text-primary);
+    height:100vh;
+    overflow:hidden;
+  }
+  #root{height:100vh; width:100vw;}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--bg-elevated); border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  button{font-family:inherit; cursor:pointer; border:none; outline:none;}
+  input,textarea{font-family:inherit; outline:none;}
+  a{color:inherit;}
+
+  /* ---------- AUTH SCREENS ---------- */
+  .auth-wrap{
+    height:100vh; width:100vw; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(139,92,246,0.18), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(45,212,191,0.14), transparent 45%),
+      var(--bg-deepest);
+    position:relative;
+  }
+  .wave-bars{position:absolute; top:48px; left:50%; transform:translateX(-50%); display:flex; gap:6px; align-items:flex-end; height:34px;}
+  .wave-bars span{width:6px; border-radius:3px; background:linear-gradient(180deg,var(--accent),var(--accent-2)); animation:bar 1.4s ease-in-out infinite;}
+  .wave-bars span:nth-child(1){height:14px; animation-delay:0s;}
+  .wave-bars span:nth-child(2){height:28px; animation-delay:.15s;}
+  .wave-bars span:nth-child(3){height:34px; animation-delay:.3s;}
+  .wave-bars span:nth-child(4){height:20px; animation-delay:.45s;}
+  .wave-bars span:nth-child(5){height:10px; animation-delay:.6s;}
+  @keyframes bar{0%,100%{transform:scaleY(.5);} 50%{transform:scaleY(1);}}
+
+  .auth-card{
+    width:380px; background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:16px; padding:40px 32px 32px; margin-top:40px;
+    box-shadow:0 30px 60px rgba(0,0,0,0.45);
+  }
+  .auth-brand{font-size:13px; letter-spacing:3px; color:var(--accent-2); text-transform:uppercase; font-weight:700; text-align:center; margin-bottom:6px;}
+  .auth-title{font-size:24px; font-weight:800; text-align:center; margin-bottom:6px;}
+  .auth-sub{font-size:14px; color:var(--text-muted); text-align:center; margin-bottom:26px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); margin-bottom:7px;}
+  .field input{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-input); color:var(--text-primary); font-size:14px;
+  }
+  .field input:focus{border-color:var(--accent);}
+  .swatches{display:flex; gap:8px; margin-top:4px;}
+  .swatch{width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent;}
+  .swatch.selected{border-color:#fff;}
+  .btn-primary{
+    width:100%; padding:12px; border-radius:8px; margin-top:8px;
+    background:linear-gradient(90deg,var(--accent),#6D3FE0); color:#fff; font-weight:700; font-size:14px;
+    transition:opacity .15s;
+  }
+  .btn-primary:hover{opacity:.88;}
+  .auth-switch{text-align:center; font-size:13px; color:var(--text-muted); margin-top:18px;}
+  .auth-switch b{color:var(--accent-2); cursor:pointer;}
+  .auth-error{background:rgba(240,86,123,0.12); border:1px solid rgba(240,86,123,0.4); color:#FF9DB4; font-size:13px; padding:9px 11px; border-radius:8px; margin-bottom:14px;}
+  .auth-hint{font-size:11px; color:var(--text-faint); text-align:center; margin-top:14px; line-height:1.5;}
+
+  /* ---------- APP LAYOUT ---------- */
+  .app{display:flex; height:100vh;}
+  .rail{
+    width:72px; background:var(--bg-rail); display:flex; flex-direction:column; align-items:center;
+    padding:12px 0; gap:8px; flex-shrink:0; overflow-y:auto;
+  }
+  .rail-logo{width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); margin-bottom:6px; flex-shrink:0;}
+  .rail-logo .bars{display:flex; gap:2.5px; align-items:flex-end; height:16px;}
+  .rail-logo .bars span{width:3px; background:#fff; border-radius:2px;}
+  .rail-divider{width:32px; height:2px; background:var(--border); border-radius:1px; margin:4px 0;}
+  .rail-icon{
+    width:48px; height:48px; border-radius:16px; background:var(--bg-elevated); display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:16px; color:var(--text-primary); position:relative; flex-shrink:0; transition:border-radius .15s, background .15s;
+  }
+  .rail-icon:hover, .rail-icon.active{border-radius:14px; background:var(--accent);}
+  .rail-icon.active::before{content:''; position:absolute; left:-12px; top:50%; transform:translateY(-50%); width:4px; height:24px; background:#fff; border-radius:0 4px 4px 0;}
+  .rail-icon.add{background:var(--bg-elevated); color:var(--success); font-size:22px; font-weight:400;}
+  .rail-icon.add:hover{background:var(--success); color:#fff;}
+
+  .sidebar{width:240px; background:var(--bg-panel); display:flex; flex-direction:column; flex-shrink:0; border-right:1px solid var(--border);}
+  .sidebar-header{padding:16px; font-weight:800; font-size:16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 0 rgba(0,0,0,.2);}
+  .sidebar-header .invite-code{font-size:10px; color:var(--text-faint); font-weight:500; margin-top:2px;}
+  .sidebar-section{padding:16px 10px 4px; font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; letter-spacing:.6px; display:flex; justify-content:space-between; align-items:center;}
+  .sidebar-section .add-btn{color:var(--text-faint); font-size:16px; cursor:pointer;}
+  .sidebar-section .add-btn:hover{color:var(--text-primary);}
+  .sidebar-list{flex:1; overflow-y:auto; padding:2px 10px;}
+  .chan-item, .dm-item{
+    display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; margin-bottom:2px; cursor:pointer; color:var(--text-muted); font-size:14px; font-weight:500;
+  }
+  .chan-item:hover, .dm-item:hover{background:var(--bg-elevated); color:var(--text-primary);}
+  .chan-item.active, .dm-item.active{background:var(--bg-elevated); color:#fff;}
+  .avatar{width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:#fff; flex-shrink:0; position:relative;}
+  .avatar.small{width:22px; height:22px; font-size:10px;}
+  .status-dot{position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:var(--success); border:2px solid var(--bg-panel);}
+  .status-dot.offline{background:var(--text-faint);}
+
+  .user-panel{padding:10px; background:var(--bg-rail); display:flex; align-items:center; gap:8px; border-top:1px solid var(--border);}
+  .user-panel .who{flex:1; min-width:0;}
+  .user-panel .uname{font-size:13px; font-weight:700; display:flex; align-items:center; gap:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .user-panel .utag{font-size:11px; color:var(--text-faint);}
+  .pro-badge{background:linear-gradient(90deg,var(--pro),#FFD98A); color:#3A2A00; font-size:9px; font-weight:800; padding:1px 5px; border-radius:5px; letter-spacing:.3px;}
+  .icon-btn{width:30px; height:30px; border-radius:8px; background:transparent; color:var(--text-muted); display:flex; align-items:center; justify-content:center; font-size:15px;}
+  .icon-btn:hover{background:var(--bg-elevated); color:var(--text-primary);}
+
+  .main{flex:1; display:flex; flex-direction:column; background:var(--bg-chat); min-width:0;}
+  .chat-header{height:52px; border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; gap:8px; flex-shrink:0; box-shadow:0 1px 0 rgba(0,0,0,.15);}
+  .chat-header .hash{color:var(--text-faint); font-size:20px; font-weight:400;}
+  .chat-header .title{font-weight:700; font-size:15px;}
+  .chat-header .sub{color:var(--text-faint); font-size:12px; margin-left:8px; padding-left:8px; border-left:1px solid var(--border);}
+
+  .messages{flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:2px;}
+  .msg-row{display:flex; gap:12px; padding:6px 4px; border-radius:8px;}
+  .msg-row:hover{background:rgba(255,255,255,0.02);}
+  .msg-row .avatar{margin-top:2px;}
+  .msg-body{flex:1; min-width:0;}
+  .msg-meta{display:flex; align-items:baseline; gap:8px;}
+  .msg-author{font-weight:700; font-size:14.5px;}
+  .msg-time{font-size:11px; color:var(--text-faint);}
+  .msg-text{font-size:14.5px; color:#DCD8ED; line-height:1.5; word-wrap:break-word;}
+  .empty-state{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text-faint); gap:10px; text-align:center; padding:20px;}
+  .empty-state .big{font-size:40px;}
+  .day-divider{display:flex; align-items:center; gap:10px; color:var(--text-faint); font-size:11px; font-weight:700; margin:12px 0 4px; text-transform:uppercase; letter-spacing:.5px;}
+  .day-divider::before,.day-divider::after{content:''; flex:1; height:1px; background:var(--border);}
+
+  .composer{padding:0 16px 20px; flex-shrink:0;}
+  .composer-inner{background:var(--bg-input); border-radius:12px; display:flex; align-items:center; padding:4px 6px 4px 16px; border:1px solid var(--border); transition:border-color .15s, background .15s;}
+  .composer-inner.dragover{border-color:var(--accent); background:rgba(139,92,246,0.08);}
+  .composer-inner input{flex:1; background:transparent; border:none; padding:11px 4px; color:var(--text-primary); font-size:14.5px;}
+  .composer-inner input::placeholder{color:var(--text-faint);}
+  .send-btn{width:36px; height:36px; border-radius:9px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;}
+  .send-btn:hover{background:#7c4ce8;}
+
+  .members{width:250px; background:var(--bg-panel); border-left:1px solid var(--border); padding:16px 12px; overflow-y:auto; flex-shrink:0;}
+  .members h4{font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.6px; margin-bottom:10px;}
+  .member-row{display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:8px;}
+  .member-row:hover{background:var(--bg-elevated);}
+  .member-row .mname{font-size:14px; font-weight:600;}
+  .member-row .mrole{font-size:10.5px; color:var(--text-faint);}
+
+  /* welcome / home */
+  .home-wrap{flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; color:var(--text-muted);}
+
+  /* ---------- MODALS ---------- */
+  .overlay{position:fixed; inset:0; background:rgba(6,5,12,0.7); display:flex; align-items:center; justify-content:center; z-index:100; backdrop-filter:blur(2px);}
+  .modal{background:var(--bg-panel); border:1px solid var(--border); border-radius:16px; width:420px; max-width:92vw; padding:26px; box-shadow:0 30px 70px rgba(0,0,0,.5); max-height:88vh; overflow-y:auto;}
+  .modal h3{font-size:19px; font-weight:800; margin-bottom:4px;}
+  .modal .modal-sub{font-size:13px; color:var(--text-muted); margin-bottom:20px;}
+  .modal-actions{display:flex; gap:10px; margin-top:22px;}
+  .btn-secondary{flex:1; padding:11px; border-radius:8px; background:var(--bg-elevated); color:var(--text-primary); font-weight:700; font-size:13.5px;}
+  .btn-secondary:hover{background:var(--border);}
+  .modal .btn-primary{flex:1; margin-top:0;}
+  .close-x{position:absolute; top:16px; right:16px; color:var(--text-faint); font-size:20px; cursor:pointer;}
+  .modal{position:relative;}
+  .code-display{background:var(--bg-input); border:1px dashed var(--accent-2); border-radius:10px; padding:14px; text-align:center; font-size:18px; font-weight:800; letter-spacing:2px; color:var(--accent-2); margin:14px 0;}
+
+  /* pricing */
+  .plans{display:flex; gap:12px; margin:18px 0;}
+  .plan-card{flex:1; border:1px solid var(--border); border-radius:12px; padding:16px 14px; background:var(--bg-elevated);}
+  .plan-card.pro{border-color:var(--pro); background:linear-gradient(160deg, rgba(245,185,66,0.13), var(--bg-elevated));}
+  .plan-name{font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-bottom:2px;}
+  .plan-card.pro .plan-name{color:var(--pro);}
+  .plan-price{font-size:22px; font-weight:800; margin-bottom:10px;}
+  .plan-price span{font-size:12px; font-weight:500; color:var(--text-faint);}
+  .plan-feats{list-style:none; font-size:12.5px; color:var(--text-muted); display:flex; flex-direction:column; gap:7px;}
+  .plan-feats li::before{content:'✓ '; color:var(--success); font-weight:800;}
+  .plan-card.pro .plan-feats li::before{color:var(--pro);}
+
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--bg-elevated); border:1px solid var(--border); padding:12px 20px; border-radius:10px; font-size:13.5px; font-weight:600; z-index:200; box-shadow:0 12px 30px rgba(0,0,0,.4); display:flex; align-items:center; gap:8px;}
+
+  /* avatars with uploaded images */
+  .avatar img{width:100%; height:100%; object-fit:cover; border-radius:50%;}
+  .rail-icon img{width:100%; height:100%; object-fit:cover; border-radius:inherit;}
+
+  /* upload dropzones */
+  .upload-zone{
+    border:2px dashed var(--border); border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px;
+    cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .upload-zone:hover, .upload-zone.dragover{border-color:var(--accent); background:rgba(139,92,246,0.08);}
+  .upload-zone .uz-preview{width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; overflow:hidden; background:var(--bg-elevated);}
+  .upload-zone.square .uz-preview{border-radius:14px;}
+  .upload-zone .uz-preview img{width:100%; height:100%; object-fit:cover;}
+  .upload-zone .uz-text{font-size:13px; color:var(--text-muted); line-height:1.4;}
+  .upload-zone .uz-text b{color:var(--text-primary);}
+  .upload-warning{font-size:11.5px; color:var(--pro); margin-top:8px; line-height:1.5; display:flex; gap:6px;}
+  .avatar-edit-btn{
+    position:absolute; top:-3px; right:-3px; width:15px; height:15px; border-radius:50%; background:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-size:9px; color:#fff; border:2px solid var(--bg-rail); cursor:pointer;
+  }
+
+  /* dm search */
+  .dm-search-input{
+    width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-input); color:var(--text-primary); font-size:13px; margin-bottom:6px;
+  }
+  .dm-search-input:focus{border-color:var(--accent);}
+  .dm-search-input::placeholder{color:var(--text-faint);}
+
+  /* settings */
+  .settings-body{display:flex; gap:22px;}
+  .settings-nav{width:150px; flex-shrink:0; display:flex; flex-direction:column; gap:2px;}
+  .settings-nav-item{padding:9px 12px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--text-muted); cursor:pointer;}
+  .settings-nav-item:hover{background:var(--bg-elevated); color:var(--text-primary);}
+  .settings-nav-item.active{background:var(--bg-elevated); color:#fff;}
+  .settings-content{flex:1; min-width:0;}
+  .settings-content h4{font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-faint); margin-bottom:14px;}
+  .settings-section{margin-bottom:24px;}
+  .toggle-row{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border);}
+  .toggle-row:last-child{border-bottom:none;}
+  .toggle-row .tr-label{font-size:13.5px; font-weight:600;}
+  .toggle-row .tr-sub{font-size:11.5px; color:var(--text-faint); margin-top:2px;}
+  .toggle-switch{width:38px; height:22px; border-radius:11px; background:var(--bg-elevated); position:relative; cursor:pointer; flex-shrink:0; border:1px solid var(--border);}
+  .toggle-switch.on{background:var(--accent); border-color:var(--accent);}
+  .toggle-switch .knob{width:16px; height:16px; border-radius:50%; background:#fff; position:absolute; top:2px; left:2px; transition:left .15s;}
+  .toggle-switch.on .knob{left:19px;}
+  .settings-save-msg{font-size:12px; color:var(--success); margin-top:8px; min-height:16px;}
+  .danger-zone{border:1px solid rgba(240,86,123,0.35); border-radius:10px; padding:14px; background:rgba(240,86,123,0.06);}
+
+  /* compact message mode */
+  .messages.compact .msg-row{padding:2px 4px; gap:8px;}
+  .messages.compact .avatar{width:20px; height:20px; font-size:9px; margin-top:2px;}
+  .messages.compact .msg-meta{gap:6px;}
+  .messages.compact .day-divider{margin:6px 0 2px;}
+
+  /* orbs + shop */
+  .orb-pill{display:inline-flex; align-items:center; gap:5px; background:var(--bg-elevated); border:1px solid var(--border); padding:5px 10px; border-radius:20px; font-size:12.5px; font-weight:700; color:var(--accent-2);}
+  .shop-balance-row{display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border-radius:12px; padding:14px 16px; margin-bottom:20px;}
+  .shop-balance-row .big-orb{font-size:20px; font-weight:800; color:var(--text-primary);}
+  .btn-claim{background:var(--accent-2); color:#0A2A26; font-weight:800; font-size:12.5px; padding:9px 14px; border-radius:8px;}
+  .btn-claim:disabled{background:var(--bg-panel); color:var(--text-faint); cursor:not-allowed;}
+  .decor-grid{display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;}
+  .decor-card{flex:1 1 45%; border:1px solid var(--border); border-radius:12px; padding:14px; background:var(--bg-elevated); text-align:center;}
+  .decor-card .decor-preview{width:64px; height:64px; border-radius:50%; margin:0 auto 10px; position:relative; background:linear-gradient(135deg,var(--accent),var(--accent-2)); display:flex; align-items:center; justify-content:center; font-size:22px;}
+  .decor-name{font-size:13px; font-weight:800; margin-bottom:3px;}
+  .decor-cost{font-size:11.5px; color:var(--accent-2); font-weight:700; margin-bottom:10px;}
+  .btn-decor{width:100%; padding:9px; border-radius:8px; font-weight:700; font-size:12.5px; background:var(--accent); color:#fff;}
+  .btn-decor.owned{background:var(--bg-panel); color:var(--text-primary); border:1px solid var(--border);}
+  .btn-decor.equipped{background:var(--success); color:#0A2A1A; border:none;}
+
+  /* petal avatar decoration */
+  .petal-ring{position:absolute; inset:0; pointer-events:none; animation:petal-spin 9s linear infinite;}
+  @keyframes petal-spin{from{transform:rotate(0deg);} to{transform:rotate(360deg);}}
+  .petal-ring span{position:absolute; top:50%; left:50%;}
+
+  /* message reactions */
+  .msg-row{position:relative;}
+  .react-trigger{
+    position:absolute; top:2px; right:6px; display:none; gap:3px; background:var(--bg-elevated); border:1px solid var(--border);
+    border-radius:8px; padding:3px; box-shadow:0 4px 10px rgba(0,0,0,.3);
+  }
+  .msg-row:hover .react-trigger{display:flex;}
+  .react-trigger span{padding:2px 5px; border-radius:5px; cursor:pointer; font-size:14px;}
+  .react-trigger span:hover{background:var(--bg-input);}
+  .reaction-bar{display:flex; gap:6px; margin-top:5px; flex-wrap:wrap;}
+  .reaction-chip{display:flex; align-items:center; gap:4px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:2px 8px; font-size:12px; cursor:pointer;}
+  .reaction-chip.mine{border-color:var(--accent); background:rgba(139,92,246,0.15);}
+  .reaction-chip:hover{border-color:var(--accent);}
+
+  /* mentions */
+  .mention{background:rgba(139,92,246,0.22); color:#C4B5FD; font-weight:700; padding:0 3px; border-radius:4px;}
+
+  /* role tags */
+  .role-tag{font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.3px; border:1px solid currentColor; padding:1px 5px; border-radius:5px; opacity:.9;}
+
+  /* message images */
+  .msg-image{max-width:320px; max-height:280px; border-radius:10px; margin-top:6px; display:block; border:1px solid var(--border); object-fit:cover;}
+  .pending-image-preview{position:relative; display:inline-block; margin:0 16px 8px; }
+  .pending-image-preview img{max-height:90px; border-radius:10px; border:1px solid var(--border); display:block;}
+  .pending-image-remove{position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:var(--danger); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer;}
+
+  /* notifications */
+  .notif-badge{position:absolute; top:-3px; right:-3px; min-width:15px; height:15px; padding:0 3px; border-radius:8px; background:var(--danger); color:#fff; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center; border:2px solid var(--bg-rail);}
+  .notif-item{display:flex; gap:10px; padding:12px; border-radius:10px; cursor:pointer; border:1px solid transparent;}
+  .notif-item:hover{background:var(--bg-elevated); border-color:var(--border);}
+  .notif-item.unread{background:rgba(139,92,246,0.08); border-color:rgba(139,92,246,0.3);}
+  .notif-body{flex:1; min-width:0;}
+  .notif-from{font-size:13px; font-weight:700;}
+  .notif-preview{font-size:12.5px; color:var(--text-muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .notif-time{font-size:10.5px; color:var(--text-faint); margin-top:3px;}
+  .notif-empty{text-align:center; padding:30px 10px; color:var(--text-faint); font-size:13px;}
+
+  /* roles */
+  .role-row{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; border:1px solid var(--border); margin-bottom:8px;}
+  .role-dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .role-row .rname{flex:1; font-size:13.5px; font-weight:700;}
+  .role-row .rlevel{font-size:11px; color:var(--text-faint);}
+  .role-del{color:var(--text-faint); cursor:pointer; font-size:14px; padding:4px;}
+  .role-del:hover{color:var(--danger);}
+  .role-select{padding:5px 7px; border-radius:7px; border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); font-size:11.5px; max-width:110px;}
+
+  /* mention autocomplete */
+  .composer{position:relative;}
+  .mention-dropdown{
+    position:absolute; bottom:100%; left:16px; right:16px; margin-bottom:6px; background:var(--bg-elevated);
+    border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:0 10px 24px rgba(0,0,0,.35); z-index:10;
+  }
+  .mention-suggest-item{display:flex; align-items:center; gap:9px; padding:8px 12px; cursor:pointer; font-size:13px; font-weight:600;}
+  .mention-suggest-item:hover{background:var(--bg-input);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+/* ============== SEED DATA ============== */
+const AVATAR_COLORS = ['#8B5CF6','#2DD4BF','#F5B942','#F0567B','#4ADE80','#5B8DEF','#FF8A5B'];
+
+let state = {
+  screen: 'login', // login | signup | app
+  authError: '',
+  users: [
+    {id:'u_nova', username:'nova', password:'demo', color:'#2DD4BF', bot:false, online:true, orbs:420, isPro:false, decoration:null, ownedDecorations:[], lastOrbClaim:0, notifications:[]},
+    {id:'u_pixel', username:'pixel', password:'demo', color:'#F5B942', bot:false, online:true, orbs:1850, isPro:true, decoration:'petals', ownedDecorations:['petals','halo'], lastOrbClaim:0, notifications:[]},
+    {id:'u_rowan', username:'rowan', password:'demo', color:'#F0567B', bot:false, online:false, orbs:60, isPro:false, decoration:null, ownedDecorations:[], lastOrbClaim:0, notifications:[]},
+  ],
+  currentUserId: null,
+  servers: [
+    {
+      id:'s1', name:'DisChat HQ', inviteCode:'DISCHAT-HQ1', ownerId:'u_nova',
+      members:['u_nova','u_pixel','u_rowan'],
+      channels:[{id:'c1', name:'general'},{id:'c2', name:'random'}],
+      roles: [{id:'r1', name:'Moderator', level:'moderator'}],
+      memberRoles: {'u_pixel':'r1'}
+    }
+  ],
+  messages: {
+    's1_c1': [
+      {userId:'u_nova', text:'welcome to DisChat HQ 👋', ts: Date.now()-1000*60*40},
+      {userId:'u_pixel', text:'glad to be here', ts: Date.now()-1000*60*35},
+    ],
+    's1_c2': [],
+  },
+  currentServerId: null, // null = home/DM view
+  currentChannelId: null,
+  currentDmUserId: null,
+  modal: null, // {type:'createServer'|'joinServer'|'createChannel'|'pro'|'invite'|'settings'|'editProfile'|'editServerIcon'}
+  toast: null,
+  settings: { compactMode: false },
+};
+
+function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+function genInviteCode(name){
+  const base = name.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,6) || 'SRV';
+  return base + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+}
+function currentUser(){ return state.users.find(u=>u.id===state.currentUserId); }
+function getServer(id){ return state.servers.find(s=>s.id===id); }
+function initials(name){ return name.slice(0,2).toUpperCase(); }
+function fmtTime(ts){
+  const d = new Date(ts);
+  let h = d.getHours(), m = d.getMinutes();
+  const ampm = h>=12 ? 'PM':'AM';
+  h = h%12; if(h===0) h=12;
+  return h+':'+String(m).padStart(2,'0')+' '+ampm;
+}
+function showToast(msg){
+  state.toast = msg;
+  render();
+  setTimeout(()=>{ state.toast=null; render(); }, 2400);
+}
+
+/* avatar / icon rendering that supports uploaded images */
+function avatarInner(entity){
+  return entity.avatarImage ? `<img src="${entity.avatarImage}" alt="">` : initials(entity.username || entity.name);
+}
+function avatarStyle(entity){
+  return entity.avatarImage ? '' : `style="background:${entity.color || '#8B5CF6'}"`;
+}
+function serverIconInner(server){
+  return server.iconImage ? `<img src="${server.iconImage}" alt="">` : initials(server.name);
+}
+const DECORATIONS = {
+  petals: { name:'Petal Bloom',    emoji:'🌸', cost:300, count:6, spin:9,  glow:'#F472B6' },
+  devil:  { name:"Devil's Grin",   emoji:'😈', cost:350, count:5, spin:6,  glow:'#F0567B', extraEmoji:'🔥' },
+  halo:   { name:'Heavenly Halo',  emoji:'😇', cost:320, count:5, spin:12, glow:'#F5B942', extraEmoji:'✨' },
+  swirl:  { name:'Infinite Swirl', emoji:'🌀', cost:400, count:8, spin:4,  glow:'#38BDF8' },
+};
+
+/* ============== ROLES & PERMISSIONS ============== */
+const ROLE_LEVELS = {
+  moderator: { label:'Moderator', color:'#4ADE80' },
+  admin:     { label:'Admin',     color:'#F0567B' },
+  coowner:   { label:'Co-Owner',  color:'#F5B942' },
+};
+function createRole(name, level){
+  name = (name||'').trim();
+  if(!name){ showToast('Give the role a name'); return; }
+  if(!ROLE_LEVELS[level]) level = 'moderator';
+  const srv = getServer(state.currentServerId);
+  srv.roles.push({id: uid('r'), name, level});
+  render();
+  showToast('Role "'+name+'" created');
+}
+function deleteRole(roleId){
+  const srv = getServer(state.currentServerId);
+  srv.roles = srv.roles.filter(r=>r.id!==roleId);
+  Object.keys(srv.memberRoles||{}).forEach(uidKey=>{
+    if(srv.memberRoles[uidKey] === roleId) delete srv.memberRoles[uidKey];
+  });
+  render();
+}
+function assignRole(userId, roleId){
+  const srv = getServer(state.currentServerId);
+  if(!srv.memberRoles) srv.memberRoles = {};
+  if(roleId) srv.memberRoles[userId] = roleId;
+  else delete srv.memberRoles[userId];
+  render();
+}
+
+/* ============== MENTIONS / NOTIFICATIONS ============== */
+function processMentions(text, scopeUsers, target){
+  const me = currentUser();
+  const found = new Set();
+  const re = /@(\w+)/g;
+  let match;
+  while((match = re.exec(text))){
+    const uname = match[1].toLowerCase();
+    const hit = scopeUsers.find(u=>u.username.toLowerCase()===uname && u.id!==me.id);
+    if(hit) found.add(hit.id);
+  }
+  found.forEach(userId=>{
+    const user = state.users.find(u=>u.id===userId);
+    if(!user) return;
+    if(!user.notifications) user.notifications = [];
+    user.notifications.unshift({
+      id: uid('n'), fromUserId: me.id, fromUsername: me.username,
+      preview: text.slice(0,80), ts: Date.now(), read:false, target
+    });
+  });
+}
+function markNotificationsRead(){
+  const me = currentUser();
+  (me.notifications||[]).forEach(n=> n.read = true);
+  render();
+}
+function openNotification(n){
+  const me = currentUser();
+  n.read = true;
+  if(n.target.type === 'channel'){
+    selectServer(n.target.serverId);
+    state.currentChannelId = n.target.channelId;
+  } else if(n.target.type === 'dm'){
+    selectDm(n.target.userId);
+  }
+  state.modal = null;
+  render();
+}
+function renderMentionText(text){
+  const escaped = escapeHtml(text);
+  return escaped.replace(/@(\w+)/g, (m0, name)=>{
+    const hit = state.users.find(u=>u.username.toLowerCase()===name.toLowerCase());
+    return hit ? `<span class="mention">@${escapeHtml(hit.username)}</span>` : m0;
+  });
+}
+
+function decorRingHtml(entity, small, forceId, customRadius, customFsize){
+  const id = forceId || (entity && entity.decoration);
+  const def = id && DECORATIONS[id];
+  if(!def) return '';
+  const radius = customRadius || (small ? 13 : 19);
+  const fsize = customFsize || (small ? 9 : 12);
+  let html = `<div class="petal-ring" style="animation-duration:${def.spin}s;">`;
+  for(let i=0;i<def.count;i++){
+    const em = def.extraEmoji ? (i%2===0 ? def.emoji : def.extraEmoji) : def.emoji;
+    html += `<span style="font-size:${fsize}px; transform:translate(-50%,-50%) rotate(${(360/def.count)*i}deg) translateY(-${radius}px);">${em}</span>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ============== REACTIONS ============== */
+const QUICK_EMOJI = ['👍','❤️','😂','😮','🎉'];
+function toggleReaction(msgKey, msgIndex, emoji){
+  const me = currentUser();
+  const msg = state.messages[msgKey][msgIndex];
+  if(!msg.reactions) msg.reactions = {};
+  if(!msg.reactions[emoji]) msg.reactions[emoji] = [];
+  const idx = msg.reactions[emoji].indexOf(me.id);
+  if(idx === -1) msg.reactions[emoji].push(me.id);
+  else msg.reactions[emoji].splice(idx,1);
+  if(msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
+  render();
+}
+
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024; // 3MB
+function readFileAsDataUrl(file, cb){
+  if(!file) return;
+  if(!file.type || !file.type.startsWith('image/')){ showToast('Please choose an image file'); return; }
+  if(file.size > MAX_IMAGE_BYTES){ showToast('Image is too large — please pick one under 3MB'); return; }
+  const reader = new FileReader();
+  reader.onload = ()=> cb(reader.result);
+  reader.readAsDataURL(file);
+}
+
+/* ============== AUTH ACTIONS ============== */
+function doSignup(username, password, color, avatarImage){
+  username = username.trim();
+  if(!username || !password){ state.authError = 'Please fill in every field.'; render(); return; }
+  if(state.users.some(u=>u.username.toLowerCase()===username.toLowerCase())){
+    state.authError = 'That username is already taken.'; render(); return;
+  }
+  const user = {id: uid('u'), username, password, color, avatarImage: avatarImage || null, bot:false, online:true, orbs:200, isPro:false, decoration:null, ownedDecorations:[], lastOrbClaim:0, notifications:[]};
+  state.users.push(user);
+  state.currentUserId = user.id;
+  state.authError = '';
+  // auto-join seed server
+  getServer('s1').members.push(user.id);
+  state.currentServerId = 's1';
+  state.currentChannelId = 'c1';
+  state.screen = 'app';
+  render();
+}
+function doLogin(username, password){
+  const user = state.users.find(u=>u.username.toLowerCase()===username.trim().toLowerCase() && u.password===password);
+  if(!user){ state.authError = 'Incorrect username or password.'; render(); return; }
+  state.currentUserId = user.id;
+  state.authError = '';
+  if(!state.currentServerId){
+    const firstServer = state.servers.find(s=>s.members.includes(user.id));
+    if(firstServer){ state.currentServerId = firstServer.id; state.currentChannelId = firstServer.channels[0].id; }
+  }
+  state.screen = 'app';
+  render();
+}
+function doLogout(){
+  state.currentUserId = null;
+  state.currentServerId = null;
+  state.currentChannelId = null;
+  state.currentDmUserId = null;
+  state.screen = 'login';
+  render();
+}
+
+/* ============== SERVER / CHANNEL ACTIONS ============== */
+function selectServer(id){
+  state.currentServerId = id;
+  state.currentDmUserId = null;
+  const srv = getServer(id);
+  state.currentChannelId = srv.channels[0] ? srv.channels[0].id : null;
+  render();
+}
+function selectHome(){
+  state.currentServerId = null;
+  state.currentChannelId = null;
+  render();
+}
+function selectChannel(id){ state.currentChannelId = id; state._mentionQuery = null; render(); }
+function selectDm(userId){
+  state.currentServerId = null;
+  state.currentChannelId = null;
+  state.currentDmUserId = userId;
+  state._mentionQuery = null;
+  render();
+}
+function createServer(name, iconImage){
+  name = name.trim();
+  if(!name) return;
+  const server = {
+    id: uid('s'), name, inviteCode: genInviteCode(name), ownerId: state.currentUserId,
+    iconImage: iconImage || null,
+    members:[state.currentUserId], channels:[{id: uid('c'), name:'general'}],
+    roles: [], memberRoles: {}
+  };
+  state.servers.push(server);
+  state.messages[server.id+'_'+server.channels[0].id] = [];
+  state.currentServerId = server.id;
+  state.currentChannelId = server.channels[0].id;
+  state._newServerIcon = null;
+  state.modal = null;
+  render();
+  showToast('Server "'+name+'" created');
+}
+function updateMyAvatar(dataUrl){
+  const me = currentUser();
+  if(!me) return;
+  me.avatarImage = dataUrl;
+  state.modal = null;
+  render();
+  showToast('Profile picture updated — now visible publicly across DisChat');
+}
+
+/* ============== SETTINGS ============== */
+function updateUsername(newName){
+  const me = currentUser();
+  newName = newName.trim();
+  if(!newName){ state._settingsError = 'Username cannot be empty.'; render(); return; }
+  if(state.users.some(u=>u.id!==me.id && u.username.toLowerCase()===newName.toLowerCase())){
+    state._settingsError = 'That username is already taken.'; render(); return;
+  }
+  me.username = newName;
+  state._settingsError = '';
+  state._settingsSaved = 'Username updated';
+  render();
+  setTimeout(()=>{ state._settingsSaved=''; render(); }, 2000);
+}
+function updatePassword(current, next){
+  const me = currentUser();
+  if(me.password !== current){ state._settingsError = 'Current password is incorrect.'; render(); return; }
+  if(!next || next.length < 3){ state._settingsError = 'New password is too short.'; render(); return; }
+  me.password = next;
+  state._settingsError = '';
+  state._settingsSaved = 'Password updated';
+  render();
+  setTimeout(()=>{ state._settingsSaved=''; render(); }, 2000);
+}
+function toggleCompactMode(){
+  state.settings.compactMode = !state.settings.compactMode;
+  render();
+}
+function joinServer(code){
+  code = code.trim().toUpperCase();
+  const server = state.servers.find(s=>s.inviteCode.toUpperCase()===code);
+  if(!server){ showToast('No server found with that ID'); return; }
+  if(!server.members.includes(state.currentUserId)) server.members.push(state.currentUserId);
+  state.currentServerId = server.id;
+  state.currentChannelId = server.channels[0].id;
+  state.modal = null;
+  render();
+  showToast('Joined "'+server.name+'"');
+}
+function createChannel(name){
+  name = name.trim().toLowerCase().replace(/\s+/g,'-');
+  if(!name) return;
+  const srv = getServer(state.currentServerId);
+  const chan = {id: uid('c'), name};
+  srv.channels.push(chan);
+  state.messages[srv.id+'_'+chan.id] = [];
+  state.currentChannelId = chan.id;
+  state.modal = null;
+  render();
+}
+
+/* ============== MESSAGING ============== */
+function sendMessage(text){
+  text = (text||'').trim();
+  const image = state._pendingImage || null;
+  if(!text && !image) return;
+  state._mentionQuery = null;
+  if(state.currentServerId && state.currentChannelId){
+    const key = state.currentServerId+'_'+state.currentChannelId;
+    if(!state.messages[key]) state.messages[key] = [];
+    state.messages[key].push({userId: state.currentUserId, text, image, ts: Date.now(), reactions:{}});
+    currentUser().orbs += 3;
+    const srv = getServer(state.currentServerId);
+    const scopeUsers = srv.members.map(uid2=>state.users.find(u=>u.id===uid2)).filter(Boolean);
+    processMentions(text, scopeUsers, {type:'channel', serverId: srv.id, channelId: state.currentChannelId});
+    state._pendingImage = null;
+    render();
+  } else if(state.currentDmUserId){
+    const key = 'dm_'+dmKey(state.currentUserId, state.currentDmUserId);
+    if(!state.messages[key]) state.messages[key] = [];
+    state.messages[key].push({userId: state.currentUserId, text, image, ts: Date.now(), reactions:{}});
+    currentUser().orbs += 3;
+    const other = state.users.find(u=>u.id===state.currentDmUserId);
+    processMentions(text, [other], {type:'dm', userId: state.currentUserId});
+    state._pendingImage = null;
+    render();
+  }
+  const el = document.getElementById('composer-input');
+  if(el) el.value = '';
+}
+function dmKey(a,b){ return [a,b].sort().join('_'); }
+
+/* ============== ORBS ECONOMY ============== */
+const NITRO_COST = 1000;
+const DAILY_CLAIM_AMOUNT = 50;
+const DAILY_CLAIM_COOLDOWN = 20 * 60 * 60 * 1000; // 20 hours, demo-friendly
+
+function fmtOrbs(n){ return n.toLocaleString(); }
+function claimDailyOrbs(){
+  const me = currentUser();
+  const since = Date.now() - (me.lastOrbClaim || 0);
+  if(since < DAILY_CLAIM_COOLDOWN){ showToast('Come back later for your next claim'); return; }
+  me.orbs += DAILY_CLAIM_AMOUNT;
+  me.lastOrbClaim = Date.now();
+  render();
+  showToast('+'+DAILY_CLAIM_AMOUNT+' Orbs claimed 🔮');
+}
+function redeemNitro(){
+  const me = currentUser();
+  if(me.isPro){ showToast('You already have Pro'); return; }
+  if(me.orbs < NITRO_COST){ showToast('Not enough Orbs — you need '+fmtOrbs(NITRO_COST)); return; }
+  me.orbs -= NITRO_COST;
+  me.isPro = true;
+  me.proExpiresAt = Date.now() + 365*24*60*60*1000;
+  render();
+  showToast('DisChat Pro activated for 1 year ✦');
+}
+function handleDecorClick(id){
+  const me = currentUser();
+  const owned = (me.ownedDecorations||[]).includes(id);
+  if(owned){
+    me.decoration = (me.decoration === id) ? null : id;
+    render();
+    return;
+  }
+  const def = DECORATIONS[id];
+  if(!def) return;
+  if(me.orbs < def.cost){ showToast('Not enough Orbs — you need '+fmtOrbs(def.cost)); return; }
+  me.orbs -= def.cost;
+  if(!me.ownedDecorations) me.ownedDecorations = [];
+  me.ownedDecorations.push(id);
+  me.decoration = id;
+  render();
+  showToast(def.name+' unlocked!');
+}
+
+/* ============== RENDER ============== */
+function render(){
+  const root = document.getElementById('root');
+  const active = document.activeElement;
+  const activeId = active && active.id;
+  const selStart = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+  const selEnd = active && typeof active.selectionEnd === 'number' ? active.selectionEnd : null;
+  if(state.screen === 'login') root.innerHTML = renderLogin();
+  else if(state.screen === 'signup') root.innerHTML = renderSignup();
+  else root.innerHTML = renderApp();
+  attachHandlers();
+  if(activeId){
+    const el = document.getElementById(activeId);
+    if(el && el.focus){
+      el.focus();
+      if(selStart !== null && el.setSelectionRange){
+        try{ el.setSelectionRange(selStart, selEnd); }catch(e){}
+      }
+    }
+  }
+}
+
+function renderLogin(){
+  return `
+  <div class="auth-wrap">
+    <div class="wave-bars"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="auth-card">
+      <div class="auth-brand">DisChat</div>
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Log in to jump into your servers</div>
+      ${state.authError ? `<div class="auth-error">${escapeHtml(state.authError)}</div>` : ''}
+      <div class="field"><label>Username</label><input id="login-username" type="text" placeholder="e.g. nova" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-primary" id="btn-login">Log In</button>
+      <div class="auth-switch">New here? <b id="go-signup">Create an account</b></div>
+      <div class="auth-hint">Demo accounts: nova / pixel / rowan — password "demo"</div>
+    </div>
+  </div>`;
+}
+
+function renderSignup(){
+  const chosen = state._signupColor || AVATAR_COLORS[0];
+  return `
+  <div class="auth-wrap">
+    <div class="wave-bars"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="auth-card">
+      <div class="auth-brand">DisChat</div>
+      <div class="auth-title">Create your account</div>
+      <div class="auth-sub">It only takes a moment</div>
+      ${state.authError ? `<div class="auth-error">${escapeHtml(state.authError)}</div>` : ''}
+      <div class="field"><label>Username</label><input id="signup-username" type="text" placeholder="pick a username" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="signup-password" type="password" placeholder="create a password" autocomplete="new-password"></div>
+      <div class="field">
+        <label>Profile Picture (optional)</label>
+        <input type="file" accept="image/*" id="signup-avatar-input" style="display:none">
+        <div class="upload-zone" id="signup-avatar-zone">
+          <div class="uz-preview" style="${state._signupAvatarData?'':'background:'+chosen}">
+            ${state._signupAvatarData ? `<img src="${state._signupAvatarData}" alt="">` : `<span>?</span>`}
+          </div>
+          <div class="uz-text"><b>Click to upload</b> or drag an image here</div>
+        </div>
+        <div class="upload-warning">⚠ This photo will be shown publicly across DisChat.</div>
+      </div>
+      <div class="field">
+        <label>Avatar Color ${state._signupAvatarData ? '(used if you remove your photo)' : ''}</label>
+        <div class="swatches">
+          ${AVATAR_COLORS.map(c=>`<div class="swatch ${c===chosen?'selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-signup">Create Account</button>
+      <div class="auth-switch">Already have an account? <b id="go-login">Log in</b></div>
+    </div>
+  </div>`;
+}
+
+function renderApp(){
+  const me = currentUser();
+  if(!me) return renderLogin();
+  const homeActive = !state.currentServerId;
+
+  // rail
+  let railHtml = `
+    <div class="rail-logo"><div class="bars"><span style="height:6px"></span><span style="height:14px"></span><span style="height:10px"></span></div></div>
+    <div class="rail-icon ${homeActive?'active':''}" id="rail-home" title="Direct Messages">DM</div>
+    <div class="rail-divider"></div>
+  `;
+  state.servers.filter(s=>s.members.includes(me.id)).forEach(s=>{
+    railHtml += `<div class="rail-icon ${state.currentServerId===s.id?'active':''}" data-server="${s.id}" title="${escapeHtml(s.name)}">${serverIconInner(s)}</div>`;
+  });
+  railHtml += `<div class="rail-icon add" id="rail-create" title="Create a server">+</div>`;
+  railHtml += `<div class="rail-icon add" id="rail-join" title="Join a server" style="font-size:15px;color:var(--accent-2)">⇥</div>`;
+
+  let middleHtml, mainHtml, membersHtml = '';
+
+  if(homeActive){
+    // DM sidebar
+    const dmQuery = (state._dmSearch || '').trim().toLowerCase();
+    const others = state.users.filter(u=>u.id!==me.id && u.username.toLowerCase().includes(dmQuery));
+    middleHtml = `
+      <div class="sidebar-header">Direct Messages</div>
+      <div style="padding:10px 12px 4px;">
+        <input id="dm-search-input" type="text" class="dm-search-input" placeholder="Search people..." value="${escapeHtml(state._dmSearch || '')}" autocomplete="off">
+      </div>
+      <div class="sidebar-list">
+        ${others.length ? others.map(u=>`
+          <div class="dm-item ${state.currentDmUserId===u.id?'active':''}" data-dm="${u.id}">
+            <div class="avatar small" ${avatarStyle(u)}>${avatarInner(u)}<span class="status-dot ${u.online?'':'offline'}"></span>${decorRingHtml(u, true)}</div>
+            <span>${escapeHtml(u.username)}</span>
+          </div>`).join('') : `<div style="padding:14px 10px; font-size:12.5px; color:var(--text-faint); text-align:center;">No people found</div>`}
+      </div>
+      ${renderUserPanel(me)}
+    `;
+    if(state.currentDmUserId){
+      const other = state.users.find(u=>u.id===state.currentDmUserId);
+      const key = 'dm_'+dmKey(me.id, other.id);
+      const msgs = state.messages[key] || [];
+      mainHtml = `
+        <div class="chat-header">
+          <div class="avatar small" ${avatarStyle(other)}>${avatarInner(other)}${decorRingHtml(other, true)}</div>
+          <span class="title">${escapeHtml(other.username)}</span>
+        </div>
+        ${renderMessages(msgs, key, null)}
+        ${renderComposer('Message @'+other.username)}
+      `;
+    } else {
+      mainHtml = `<div class="home-wrap">
+        <div style="font-size:44px">💬</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary)">Your messages</div>
+        <div style="font-size:13px;max-width:260px;text-align:center">Pick someone from the left to start a conversation, or hop into a server.</div>
+      </div>`;
+    }
+  } else {
+    const srv = getServer(state.currentServerId);
+    middleHtml = `
+      <div class="sidebar-header">
+        <div>
+          <div>${escapeHtml(srv.name)}</div>
+          <div class="invite-code">ID: ${srv.inviteCode}</div>
+        </div>
+        <div style="display:flex;gap:2px;">
+          ${srv.ownerId===me.id ? `<span class="icon-btn" id="btn-manage-roles" title="Manage Roles">🎭</span>` : ''}
+          ${srv.ownerId===me.id ? `<span class="icon-btn" id="btn-edit-server-icon" title="Change server icon">✎</span>` : ''}
+          <span class="icon-btn" id="btn-show-invite" title="Copy invite">⧉</span>
+        </div>
+      </div>
+      <div class="sidebar-section"><span>Text Channels</span><span class="add-btn" id="btn-new-channel">+</span></div>
+      <div class="sidebar-list">
+        ${srv.channels.map(c=>`
+          <div class="chan-item ${state.currentChannelId===c.id?'active':''}" data-chan="${c.id}">
+            <span style="color:var(--text-faint);font-size:16px">#</span><span>${escapeHtml(c.name)}</span>
+          </div>`).join('')}
+      </div>
+      ${renderUserPanel(me)}
+    `;
+    const chan = srv.channels.find(c=>c.id===state.currentChannelId);
+    const key = srv.id+'_'+(chan?chan.id:'');
+    const msgs = state.messages[key] || [];
+    mainHtml = chan ? `
+      <div class="chat-header">
+        <span class="hash">#</span><span class="title">${escapeHtml(chan.name)}</span>
+        <span class="sub">${srv.members.length} member${srv.members.length!==1?'s':''}</span>
+      </div>
+      ${renderMessages(msgs, key, srv)}
+      ${renderComposer('Message #'+chan.name)}
+    ` : `<div class="empty-state"><div class="big">📭</div><div>No channels yet</div></div>`;
+
+    membersHtml = `
+      <div class="members">
+        <h4>Members — ${srv.members.length}</h4>
+        ${srv.members.map(uidm=>{
+          const u = state.users.find(x=>x.id===uidm);
+          if(!u) return '';
+          const isOwnerRow = u.id === srv.ownerId;
+          const roleId = (srv.memberRoles||{})[u.id];
+          const role = roleId && srv.roles.find(r=>r.id===roleId);
+          const roleLabel = isOwnerRow ? 'Owner' : (role ? role.name : (u.isPro ? 'Pro Member' : 'Member'));
+          const roleColor = isOwnerRow ? 'var(--pro)' : (role ? ROLE_LEVELS[role.level].color : 'var(--text-faint)');
+          const canAssign = me.id === srv.ownerId && !isOwnerRow && srv.roles.length > 0;
+          return `<div class="member-row">
+            <div class="avatar small" ${avatarStyle(u)}>${avatarInner(u)}<span class="status-dot ${u.online?'':'offline'}"></span>${decorRingHtml(u, true)}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="mname">${escapeHtml(u.username)}${isOwnerRow?' 👑':''}</div>
+              <div class="mrole" style="color:${roleColor};">${escapeHtml(roleLabel)}</div>
+            </div>
+            ${canAssign ? `
+              <select class="role-select" data-assign-role-user="${u.id}">
+                <option value="">No Role</option>
+                ${srv.roles.map(r=>`<option value="${r.id}" ${roleId===r.id?'selected':''}>${escapeHtml(r.name)}</option>`).join('')}
+              </select>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="app">
+      <div class="rail">${railHtml}</div>
+      <div class="sidebar">${middleHtml}</div>
+      <div class="main">${mainHtml}</div>
+      ${membersHtml}
+    </div>
+    ${renderModal()}
+    ${state.toast ? `<div class="toast">✦ ${escapeHtml(state.toast)}</div>` : ''}
+  `;
+}
+
+function renderUserPanel(me){
+  const unread = (me.notifications||[]).filter(n=>!n.read).length;
+  return `
+    <div class="user-panel">
+      <div class="avatar small" id="btn-edit-avatar" style="cursor:pointer;${me.avatarImage?'':'background:'+me.color}">
+        ${avatarInner(me)}<span class="status-dot"></span>
+        <span class="avatar-edit-btn">✎</span>
+        ${decorRingHtml(me, true)}
+      </div>
+      <div class="who">
+        <div class="uname">${escapeHtml(me.username)} ${me.isPro ? '<span class="pro-badge">PRO</span>' : ''}</div>
+        <div class="utag">🔮 ${fmtOrbs(me.orbs)} Orbs</div>
+      </div>
+      <span class="icon-btn" id="btn-notifications" title="Notifications" style="position:relative;">🔔${unread ? `<span class="notif-badge">${unread>9?'9+':unread}</span>` : ''}</span>
+      <span class="icon-btn" id="btn-settings" title="Settings">⚙</span>
+      <span class="icon-btn" id="btn-pro" title="Orb Shop">🔮</span>
+      <span class="icon-btn" id="btn-logout" title="Log out">⏻</span>
+    </div>
+  `;
+}
+
+function renderMessages(msgs, msgKey, srv){
+  if(!msgs.length){
+    return `<div class="empty-state"><div class="big">👋</div><div style="font-weight:700;color:var(--text-primary)">No messages yet</div><div>Say something to break the ice.</div></div>`;
+  }
+  const me = currentUser();
+  let lastDay = null;
+  let html = `<div class="messages ${state.settings.compactMode?'compact':''}">`;
+  msgs.forEach((m,i)=>{
+    const u = state.users.find(x=>x.id===m.userId);
+    if(!u) return;
+    const day = new Date(m.ts).toDateString();
+    if(day !== lastDay){ html += `<div class="day-divider">${day===new Date().toDateString() ? 'Today' : day}</div>`; lastDay = day; }
+    const reactions = m.reactions || {};
+    const reactionHtml = Object.keys(reactions).length ? `
+      <div class="reaction-bar">
+        ${Object.entries(reactions).map(([emoji,userIds])=>`
+          <span class="reaction-chip ${userIds.includes(me.id)?'mine':''}" data-react-key="${msgKey}" data-react-idx="${i}" data-react-emoji="${emoji}">${emoji} ${userIds.length}</span>
+        `).join('')}
+      </div>` : '';
+    let roleBadge = '';
+    if(srv){
+      if(u.id === srv.ownerId){ roleBadge = `<span class="role-tag" style="color:var(--pro);">Owner</span>`; }
+      else{
+        const roleId = (srv.memberRoles||{})[u.id];
+        const role = roleId && srv.roles.find(r=>r.id===roleId);
+        if(role){ roleBadge = `<span class="role-tag" style="color:${ROLE_LEVELS[role.level].color};">${escapeHtml(role.name)}</span>`; }
+      }
+    }
+    const imageHtml = m.image ? `<img class="msg-image" src="${m.image}" alt="attached image">` : '';
+    html += `
+      <div class="msg-row">
+        <div class="react-trigger">
+          ${QUICK_EMOJI.map(e=>`<span data-react-key="${msgKey}" data-react-idx="${i}" data-react-emoji="${e}">${e}</span>`).join('')}
+        </div>
+        <div class="avatar" ${avatarStyle(u)}>${avatarInner(u)}${decorRingHtml(u, false)}</div>
+        <div class="msg-body">
+          <div class="msg-meta"><span class="msg-author">${escapeHtml(u.username)}</span>${u.isPro?'<span class="pro-badge">PRO</span>':''}${roleBadge}<span class="msg-time">${fmtTime(m.ts)}</span></div>
+          ${m.text ? `<div class="msg-text">${renderMentionText(m.text)}</div>` : ''}
+          ${imageHtml}
+          ${reactionHtml}
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderComposer(placeholder){
+  let mentionHtml = '';
+  if(state._mentionQuery !== null && state._mentionQuery !== undefined){
+    const me = currentUser();
+    let candidates = [];
+    if(state.currentServerId){
+      const srv = getServer(state.currentServerId);
+      candidates = srv.members.map(id=>state.users.find(u=>u.id===id)).filter(Boolean);
+    } else if(state.currentDmUserId){
+      candidates = [state.users.find(u=>u.id===state.currentDmUserId)].filter(Boolean);
+    }
+    const q = state._mentionQuery.toLowerCase();
+    const matches = candidates.filter(u=>u.id!==me.id && u.username.toLowerCase().startsWith(q)).slice(0,5);
+    if(matches.length){
+      mentionHtml = `<div class="mention-dropdown">
+        ${matches.map(u=>`
+          <div class="mention-suggest-item" data-mention-user="${escapeHtml(u.username)}">
+            <div class="avatar small" ${avatarStyle(u)}>${avatarInner(u)}</div><span>${escapeHtml(u.username)}</span>
+          </div>`).join('')}
+      </div>`;
+    }
+  }
+  return `
+    <div class="composer">
+      ${mentionHtml}
+      ${state._pendingImage ? `
+        <div class="pending-image-preview">
+          <img src="${state._pendingImage}" alt="">
+          <span class="pending-image-remove" id="btn-remove-pending-image">✕</span>
+        </div>` : ''}
+      <div class="composer-inner" id="composer-inner">
+        <input type="file" accept="image/*" id="composer-image-input" style="display:none">
+        <span class="icon-btn" id="btn-attach-image" title="Attach an image" style="flex-shrink:0;">📎</span>
+        <input id="composer-input" type="text" placeholder="${escapeHtml(placeholder)}" autocomplete="off">
+        <button class="send-btn" id="btn-send">➤</button>
+      </div>
+    </div>`;
+}
+
+function renderModal(){
+  if(!state.modal) return '';
+  const t = state.modal.type;
+  if(t === 'createServer'){
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Create a server</h3>
+        <div class="modal-sub">Your server is where you and your friends hang out. Make yours and start talking.</div>
+        <div class="field"><label>Server Name</label><input id="input-server-name" type="text" placeholder="e.g. Late Night Coders" autofocus></div>
+        <div class="field">
+          <label>Server Icon (optional)</label>
+          <input type="file" accept="image/*" id="server-icon-input" style="display:none">
+          <div class="upload-zone square" id="server-icon-zone">
+            <div class="uz-preview">
+              ${state._newServerIcon ? `<img src="${state._newServerIcon}" alt="">` : `<span>🖼</span>`}
+            </div>
+            <div class="uz-text"><b>Click to upload</b> or drag an image here</div>
+          </div>
+          <div class="upload-warning">⚠ This icon will be publicly visible to everyone in the server.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="modal-close-2">Cancel</button>
+          <button class="btn-primary" id="btn-confirm-create-server">Create</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(t === 'joinServer'){
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Join a server</h3>
+        <div class="modal-sub">Enter a server ID / invite code below to join an existing server.</div>
+        <div class="field"><label>Server ID</label><input id="input-join-code" type="text" placeholder="e.g. SIGNAL-HQ1" autofocus></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="modal-close-2">Cancel</button>
+          <button class="btn-primary" id="btn-confirm-join-server">Join Server</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(t === 'createChannel'){
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Create channel</h3>
+        <div class="modal-sub">Add a new text channel to this server.</div>
+        <div class="field"><label>Channel Name</label><input id="input-channel-name" type="text" placeholder="e.g. announcements" autofocus></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="modal-close-2">Cancel</button>
+          <button class="btn-primary" id="btn-confirm-create-channel">Create Channel</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(t === 'settings'){
+    const me = currentUser();
+    const tab = state._settingsTab || 'account';
+    const nav = [['account','My Account'],['profile','Profile'],['appearance','Appearance']];
+    let body = '';
+    if(tab === 'account'){
+      body = `
+        <h4>My Account</h4>
+        <div class="settings-section">
+          <div class="field"><label>Username</label><input id="settings-username" type="text" value="${escapeHtml(me.username)}"></div>
+          <button class="btn-primary" id="btn-save-username" style="margin-top:2px;">Save Username</button>
+        </div>
+        <div class="settings-section">
+          <div class="field"><label>Current Password</label><input id="settings-current-password" type="password" placeholder="current password"></div>
+          <div class="field"><label>New Password</label><input id="settings-new-password" type="password" placeholder="new password"></div>
+          <button class="btn-primary" id="btn-save-password" style="margin-top:2px;">Update Password</button>
+        </div>
+        ${state._settingsError ? `<div class="auth-error">${escapeHtml(state._settingsError)}</div>` : ''}
+        <div class="settings-save-msg">${state._settingsSaved ? '✓ '+escapeHtml(state._settingsSaved) : ''}</div>
+      `;
+    } else if(tab === 'profile'){
+      body = `
+        <h4>Profile</h4>
+        <div class="settings-section">
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px;">Profile Picture</label>
+          <input type="file" accept="image/*" id="settings-avatar-input" style="display:none">
+          <div class="upload-zone" id="settings-avatar-zone">
+            <div class="uz-preview" style="${me.avatarImage?'':'background:'+me.color}">
+              ${me.avatarImage ? `<img src="${me.avatarImage}" alt="">` : `<span>${initials(me.username)}</span>`}
+            </div>
+            <div class="uz-text"><b>Click to upload</b> or drag an image here</div>
+          </div>
+          <div class="upload-warning">⚠ This photo will be shown publicly across DisChat.</div>
+        </div>
+        <div class="settings-section">
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px;">Avatar Color</label>
+          <div class="swatches">
+            ${AVATAR_COLORS.map(c=>`<div class="swatch ${!me.avatarImage && c===me.color?'selected':''}" data-settings-color="${c}" style="background:${c}"></div>`).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      body = `
+        <h4>Appearance</h4>
+        <div class="toggle-row">
+          <div><div class="tr-label">Compact message list</div><div class="tr-sub">Tighter spacing between messages</div></div>
+          <div class="toggle-switch ${state.settings.compactMode?'on':''}" id="toggle-compact"><div class="knob"></div></div>
+        </div>
+      `;
+    }
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal" style="width:560px">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Settings</h3>
+        <div class="modal-sub">Manage your account, profile, and app preferences.</div>
+        <div class="settings-body">
+          <div class="settings-nav">
+            ${nav.map(([id,label])=>`<div class="settings-nav-item ${tab===id?'active':''}" data-settings-tab="${id}">${label}</div>`).join('')}
+          </div>
+          <div class="settings-content">${body}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(t === 'notifications'){
+    const me = currentUser();
+    const notifs = me.notifications || [];
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal" style="width:420px">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Notifications</h3>
+        <div class="modal-sub">Pings from @mentions across your servers and DMs.</div>
+        ${notifs.length ? `
+          <div style="display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;">
+            ${notifs.map(n=>`
+              <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}">
+                <div class="avatar small" style="background:${(state.users.find(u=>u.id===n.fromUserId)||{}).color||'#8B5CF6'}">${initials(n.fromUsername)}</div>
+                <div class="notif-body">
+                  <div class="notif-from">${escapeHtml(n.fromUsername)} mentioned you</div>
+                  <div class="notif-preview">${escapeHtml(n.preview)}</div>
+                  <div class="notif-time">${fmtTime(n.ts)}</div>
+                </div>
+              </div>`).join('')}
+          </div>
+          <div class="modal-actions"><button class="btn-secondary" id="btn-mark-all-read" style="flex:1;">Mark all as read</button></div>
+        ` : `<div class="notif-empty">🔔 No notifications yet<br>You'll see @mentions here.</div>`}
+      </div>
+    </div>`;
+  }
+  if(t === 'manageRoles'){
+    const srv = getServer(state.currentServerId);
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal" style="width:440px">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Manage Roles</h3>
+        <div class="modal-sub">Create roles and assign them to members of ${escapeHtml(srv.name)}.</div>
+        <div style="margin-bottom:18px;">
+          ${srv.roles.length ? srv.roles.map(r=>`
+            <div class="role-row">
+              <span class="role-dot" style="background:${ROLE_LEVELS[r.level].color};"></span>
+              <span class="rname">${escapeHtml(r.name)}</span>
+              <span class="rlevel">${ROLE_LEVELS[r.level].label}</span>
+              <span class="role-del" data-delete-role="${r.id}" title="Delete role">✕</span>
+            </div>`).join('') : `<div style="font-size:12.5px;color:var(--text-faint);">No roles yet — create one below.</div>`}
+        </div>
+        <div class="field"><label>Role Name</label><input id="input-role-name" type="text" placeholder="e.g. Moderator, Co-Owner..."></div>
+        <div class="field">
+          <label>Permission Level</label>
+          <select id="input-role-level" class="role-select" style="width:100%;max-width:none;padding:10px 12px;">
+            <option value="moderator">Moderator</option>
+            <option value="admin">Admin</option>
+            <option value="coowner">Co-Owner</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="modal-close-2">Close</button>
+          <button class="btn-primary" id="btn-create-role">Create Role</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(t === 'invite'){
+    const srv = getServer(state.currentServerId);
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Invite people to ${escapeHtml(srv.name)}</h3>
+        <div class="modal-sub">Share this server ID so others can join.</div>
+        <div class="code-display">${srv.inviteCode}</div>
+        <div class="modal-actions">
+          <button class="btn-primary" id="modal-close-2" style="flex:1">Done</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(t === 'editProfile'){
+    const me = currentUser();
+    const preview = state._editAvatarData !== undefined ? state._editAvatarData : me.avatarImage;
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Change profile picture</h3>
+        <div class="modal-sub">This replaces your current profile picture for everyone who can see you.</div>
+        <div class="field">
+          <input type="file" accept="image/*" id="edit-avatar-input" style="display:none">
+          <div class="upload-zone" id="edit-avatar-zone">
+            <div class="uz-preview" style="${preview?'':'background:'+me.color}">
+              ${preview ? `<img src="${preview}" alt="">` : `<span>${initials(me.username)}</span>`}
+            </div>
+            <div class="uz-text"><b>Click to upload</b> or drag an image here</div>
+          </div>
+          <div class="upload-warning">⚠ This photo will be shown publicly across DisChat.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="modal-close-2">Cancel</button>
+          <button class="btn-primary" id="btn-confirm-edit-avatar">Save</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(t === 'editServerIcon'){
+    const srv = getServer(state.currentServerId);
+    const preview = state._editServerIconData !== undefined ? state._editServerIconData : srv.iconImage;
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Change server icon</h3>
+        <div class="modal-sub">This icon is shown to everyone in ${escapeHtml(srv.name)}.</div>
+        <div class="field">
+          <input type="file" accept="image/*" id="edit-server-icon-input" style="display:none">
+          <div class="upload-zone square" id="edit-server-icon-zone">
+            <div class="uz-preview">
+              ${preview ? `<img src="${preview}" alt="">` : `<span>${initials(srv.name)}</span>`}
+            </div>
+            <div class="uz-text"><b>Click to upload</b> or drag an image here</div>
+          </div>
+          <div class="upload-warning">⚠ This icon will be publicly visible to everyone in the server.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="modal-close-2">Cancel</button>
+          <button class="btn-primary" id="btn-confirm-edit-server-icon">Save</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(t === 'pro'){
+    const me = currentUser();
+    const since = Date.now() - (me.lastOrbClaim || 0);
+    const canClaim = since >= DAILY_CLAIM_COOLDOWN;
+    return `<div class="overlay" id="modal-overlay">
+      <div class="modal" style="width:520px">
+        <span class="close-x" id="modal-close">✕</span>
+        <h3>Orb Shop</h3>
+        <div class="modal-sub">Earn Orbs by chatting, then spend them on Pro and avatar decorations.</div>
+
+        <div class="shop-balance-row">
+          <div>
+            <div style="font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Your Balance</div>
+            <div class="big-orb">🔮 ${fmtOrbs(me.orbs)} Orbs</div>
+          </div>
+          <button class="btn-claim" id="btn-claim-orbs" ${canClaim?'':'disabled'}>${canClaim ? '+'+DAILY_CLAIM_AMOUNT+' Claim Daily' : 'Claimed — check back later'}</button>
+        </div>
+
+        <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-faint);margin-bottom:10px;">DisChat Pro</h4>
+        <div class="plans" style="margin-top:0;">
+          <div class="plan-card pro" style="flex:1;">
+            <div class="plan-name">Pro · 1 Year</div>
+            <div class="plan-price">🔮 ${fmtOrbs(NITRO_COST)}<span> orbs</span></div>
+            <ul class="plan-feats">
+              <li>Profile badge & flair</li>
+              <li>500MB uploads</li>
+              <li>4K screen share</li>
+              <li>Custom emoji packs</li>
+            </ul>
+            <button class="btn-decor ${me.isPro?'owned':''}" id="btn-redeem-pro" style="margin-top:12px;" ${me.isPro?'disabled':''}>${me.isPro ? 'Active ✓' : 'Redeem'}</button>
+          </div>
+        </div>
+
+        <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-faint);margin:20px 0 10px;">Avatar Decorations</h4>
+        <div class="decor-grid">
+          ${Object.entries(DECORATIONS).map(([id,def])=>{
+            const owned = (me.ownedDecorations||[]).includes(id);
+            const equipped = me.decoration === id;
+            const label = owned ? (equipped ? 'Unequip' : 'Equip') : 'Buy';
+            return `<div class="decor-card">
+              <div class="decor-preview" style="box-shadow:0 0 16px ${def.glow}55;">
+                ${def.emoji}
+                ${decorRingHtml(null, false, id, 30, 13)}
+              </div>
+              <div class="decor-name">${escapeHtml(def.name)}</div>
+              <div class="decor-cost">${owned ? 'Owned' : '🔮 '+fmtOrbs(def.cost)}</div>
+              <button class="btn-decor ${owned?'owned':''} ${equipped?'equipped':''}" data-decor-id="${id}">${label}</button>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="upload-warning" style="color:var(--text-faint);margin-top:16px;">This is a demo economy — Orbs aren't real currency and can't be purchased with money.</div>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============== EVENT WIRING ============== */
+function attachHandlers(){
+  const root = document.getElementById('root');
+
+  // LOGIN
+  const btnLogin = document.getElementById('btn-login');
+  if(btnLogin) btnLogin.onclick = ()=> doLogin(val('login-username'), val('login-password'));
+  const goSignup = document.getElementById('go-signup');
+  if(goSignup) goSignup.onclick = ()=>{ state.screen='signup'; state.authError=''; render(); };
+  addEnterKey('login-password', ()=> doLogin(val('login-username'), val('login-password')));
+  addEnterKey('login-username', ()=> doLogin(val('login-username'), val('login-password')));
+
+  // SIGNUP
+  const btnSignup = document.getElementById('btn-signup');
+  const doSignupNow = ()=>{
+    doSignup(val('signup-username'), val('signup-password'), state._signupColor || AVATAR_COLORS[0], state._signupAvatarData);
+    state._signupAvatarData = null;
+  };
+  if(btnSignup) btnSignup.onclick = doSignupNow;
+  const goLogin = document.getElementById('go-login');
+  if(goLogin) goLogin.onclick = ()=>{ state.screen='login'; state.authError=''; render(); };
+  addEnterKey('signup-password', doSignupNow);
+  root.querySelectorAll('.swatch').forEach(sw=>{
+    sw.onclick = ()=>{ state._signupColor = sw.getAttribute('data-color'); render(); };
+  });
+  wireUploadZone('signup-avatar-zone', 'signup-avatar-input', dataUrl=>{ state._signupAvatarData = dataUrl; render(); });
+
+  if(state.screen !== 'app') return;
+
+  // RAIL
+  const railHome = document.getElementById('rail-home');
+  if(railHome) railHome.onclick = selectHome;
+  root.querySelectorAll('[data-server]').forEach(el=>{
+    el.onclick = ()=> selectServer(el.getAttribute('data-server'));
+  });
+  const railCreate = document.getElementById('rail-create');
+  if(railCreate) railCreate.onclick = ()=>{ state.modal = {type:'createServer'}; render(); };
+  const railJoin = document.getElementById('rail-join');
+  if(railJoin) railJoin.onclick = ()=>{ state.modal = {type:'joinServer'}; render(); };
+
+  // SIDEBAR
+  root.querySelectorAll('[data-chan]').forEach(el=>{
+    el.onclick = ()=> selectChannel(el.getAttribute('data-chan'));
+  });
+  root.querySelectorAll('[data-dm]').forEach(el=>{
+    el.onclick = ()=> selectDm(el.getAttribute('data-dm'));
+  });
+  const dmSearchInput = document.getElementById('dm-search-input');
+  if(dmSearchInput) dmSearchInput.oninput = ()=>{ state._dmSearch = dmSearchInput.value; render(); };
+  const btnNewChannel = document.getElementById('btn-new-channel');
+  if(btnNewChannel) btnNewChannel.onclick = ()=>{ state.modal = {type:'createChannel'}; render(); };
+  const btnShowInvite = document.getElementById('btn-show-invite');
+  if(btnShowInvite) btnShowInvite.onclick = ()=>{ state.modal = {type:'invite'}; render(); };
+  const btnManageRoles = document.getElementById('btn-manage-roles');
+  if(btnManageRoles) btnManageRoles.onclick = ()=>{ state.modal = {type:'manageRoles'}; render(); };
+
+  // USER PANEL
+  const btnPro = document.getElementById('btn-pro');
+  if(btnPro) btnPro.onclick = ()=>{ state.modal = {type:'pro'}; render(); };
+  const btnLogout = document.getElementById('btn-logout');
+  if(btnLogout) btnLogout.onclick = doLogout;
+  const btnEditAvatar = document.getElementById('btn-edit-avatar');
+  if(btnEditAvatar) btnEditAvatar.onclick = ()=>{ state._editAvatarData = undefined; state.modal = {type:'editProfile'}; render(); };
+  const btnEditServerIcon = document.getElementById('btn-edit-server-icon');
+  if(btnEditServerIcon) btnEditServerIcon.onclick = ()=>{ state._editServerIconData = undefined; state.modal = {type:'editServerIcon'}; render(); };
+  const btnSettings = document.getElementById('btn-settings');
+  if(btnSettings) btnSettings.onclick = ()=>{ state._settingsTab = 'account'; state._settingsError=''; state._settingsSaved=''; state.modal = {type:'settings'}; render(); };
+  const btnNotifications = document.getElementById('btn-notifications');
+  if(btnNotifications) btnNotifications.onclick = ()=>{ state.modal = {type:'notifications'}; render(); };
+
+  // COMPOSER
+  const btnSend = document.getElementById('btn-send');
+  if(btnSend) btnSend.onclick = ()=> sendMessage(val('composer-input'));
+  addEnterKey('composer-input', ()=> sendMessage(val('composer-input')));
+  const composerInput = document.getElementById('composer-input');
+  if(composerInput){
+    composerInput.focus();
+    composerInput.oninput = ()=>{
+      const v = composerInput.value;
+      const cursorPos = composerInput.selectionStart;
+      const upto = v.slice(0, cursorPos);
+      const m = upto.match(/(?:^|\s)@(\w*)$/);
+      state._mentionQuery = m ? m[1] : null;
+      render();
+    };
+  }
+  root.querySelectorAll('[data-mention-user]').forEach(el=>{
+    el.onclick = ()=> insertMention(el.getAttribute('data-mention-user'));
+  });
+  wireUploadZone('btn-attach-image', 'composer-image-input', dataUrl=>{ state._pendingImage = dataUrl; render(); });
+  const btnRemovePendingImage = document.getElementById('btn-remove-pending-image');
+  if(btnRemovePendingImage) btnRemovePendingImage.onclick = ()=>{ state._pendingImage = null; render(); };
+  const composerInner = document.getElementById('composer-inner');
+  if(composerInner){
+    composerInner.ondragover = (e)=>{ e.preventDefault(); composerInner.classList.add('dragover'); };
+    composerInner.ondragleave = ()=> composerInner.classList.remove('dragover');
+    composerInner.ondrop = (e)=>{
+      e.preventDefault();
+      composerInner.classList.remove('dragover');
+      if(e.dataTransfer.files && e.dataTransfer.files[0]) readFileAsDataUrl(e.dataTransfer.files[0], dataUrl=>{ state._pendingImage = dataUrl; render(); });
+    };
+  }
+
+  // MODAL
+  const closeModal = ()=>{
+    state.modal=null;
+    state._newServerIcon = null;
+    state._editAvatarData = undefined;
+    state._editServerIconData = undefined;
+    render();
+  };
+  const overlay = document.getElementById('modal-overlay');
+  if(overlay) overlay.onclick = (e)=>{ if(e.target.id==='modal-overlay') closeModal(); };
+  const mClose = document.getElementById('modal-close');
+  if(mClose) mClose.onclick = closeModal;
+  const mClose2 = document.getElementById('modal-close-2');
+  if(mClose2) mClose2.onclick = closeModal;
+  const btnConfirmCreateServer = document.getElementById('btn-confirm-create-server');
+  if(btnConfirmCreateServer){
+    const doCreateServer = ()=>{ createServer(val('input-server-name'), state._newServerIcon); };
+    btnConfirmCreateServer.onclick = doCreateServer;
+    addEnterKey('input-server-name', doCreateServer);
+  }
+  wireUploadZone('server-icon-zone', 'server-icon-input', dataUrl=>{ state._newServerIcon = dataUrl; render(); });
+  wireUploadZone('edit-avatar-zone', 'edit-avatar-input', dataUrl=>{ state._editAvatarData = dataUrl; render(); });
+  wireUploadZone('edit-server-icon-zone', 'edit-server-icon-input', dataUrl=>{ state._editServerIconData = dataUrl; render(); });
+  const btnConfirmEditAvatar = document.getElementById('btn-confirm-edit-avatar');
+  if(btnConfirmEditAvatar) btnConfirmEditAvatar.onclick = ()=>{
+    updateMyAvatar(state._editAvatarData !== undefined ? state._editAvatarData : currentUser().avatarImage);
+    state._editAvatarData = undefined;
+  };
+  const btnConfirmEditServerIcon = document.getElementById('btn-confirm-edit-server-icon');
+  if(btnConfirmEditServerIcon) btnConfirmEditServerIcon.onclick = ()=>{
+    const srv = getServer(state.currentServerId);
+    srv.iconImage = state._editServerIconData !== undefined ? state._editServerIconData : srv.iconImage;
+    state._editServerIconData = undefined;
+    state.modal = null;
+    render();
+    showToast('Server icon updated');
+  };
+
+  // SETTINGS MODAL
+  root.querySelectorAll('[data-settings-tab]').forEach(el=>{
+    el.onclick = ()=>{ state._settingsTab = el.getAttribute('data-settings-tab'); state._settingsError=''; state._settingsSaved=''; render(); };
+  });
+  const btnSaveUsername = document.getElementById('btn-save-username');
+  if(btnSaveUsername) btnSaveUsername.onclick = ()=> updateUsername(val('settings-username'));
+  const btnSavePassword = document.getElementById('btn-save-password');
+  if(btnSavePassword) btnSavePassword.onclick = ()=> updatePassword(val('settings-current-password'), val('settings-new-password'));
+  wireUploadZone('settings-avatar-zone', 'settings-avatar-input', dataUrl=>{
+    currentUser().avatarImage = dataUrl;
+    render();
+    showToast('Profile picture updated — now visible publicly across DisChat');
+  });
+  root.querySelectorAll('[data-settings-color]').forEach(sw=>{
+    sw.onclick = ()=>{ currentUser().color = sw.getAttribute('data-settings-color'); render(); };
+  });
+  const toggleCompact = document.getElementById('toggle-compact');
+  if(toggleCompact) toggleCompact.onclick = toggleCompactMode;
+  const btnConfirmJoinServer = document.getElementById('btn-confirm-join-server');
+  if(btnConfirmJoinServer){
+    btnConfirmJoinServer.onclick = ()=> joinServer(val('input-join-code'));
+    addEnterKey('input-join-code', ()=> joinServer(val('input-join-code')));
+  }
+  const btnConfirmCreateChannel = document.getElementById('btn-confirm-create-channel');
+  if(btnConfirmCreateChannel){
+    btnConfirmCreateChannel.onclick = ()=> createChannel(val('input-channel-name'));
+    addEnterKey('input-channel-name', ()=> createChannel(val('input-channel-name')));
+  }
+  const btnClaimOrbs = document.getElementById('btn-claim-orbs');
+  if(btnClaimOrbs) btnClaimOrbs.onclick = claimDailyOrbs;
+  const btnRedeemPro = document.getElementById('btn-redeem-pro');
+  if(btnRedeemPro) btnRedeemPro.onclick = redeemNitro;
+  root.querySelectorAll('[data-decor-id]').forEach(el=>{
+    el.onclick = ()=> handleDecorClick(el.getAttribute('data-decor-id'));
+  });
+
+  // ROLES
+  root.querySelectorAll('[data-assign-role-user]').forEach(el=>{
+    el.onchange = ()=> assignRole(el.getAttribute('data-assign-role-user'), el.value || null);
+  });
+  const btnCreateRole = document.getElementById('btn-create-role');
+  if(btnCreateRole){
+    const doCreateRole = ()=>{ createRole(val('input-role-name'), val('input-role-level')); };
+    btnCreateRole.onclick = doCreateRole;
+    addEnterKey('input-role-name', doCreateRole);
+  }
+  root.querySelectorAll('[data-delete-role]').forEach(el=>{
+    el.onclick = ()=> deleteRole(el.getAttribute('data-delete-role'));
+  });
+
+  // NOTIFICATIONS
+  root.querySelectorAll('[data-notif-id]').forEach(el=>{
+    el.onclick = ()=>{
+      const me = currentUser();
+      const n = (me.notifications||[]).find(x=>x.id===el.getAttribute('data-notif-id'));
+      if(n) openNotification(n);
+    };
+  });
+  const btnMarkAllRead = document.getElementById('btn-mark-all-read');
+  if(btnMarkAllRead) btnMarkAllRead.onclick = markNotificationsRead;
+
+  // autoscroll messages to bottom
+  const msgsEl = root.querySelector('.messages');
+  if(msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  // REACTIONS
+  root.querySelectorAll('[data-react-emoji]').forEach(el=>{
+    el.onclick = ()=> toggleReaction(el.getAttribute('data-react-key'), parseInt(el.getAttribute('data-react-idx'),10), el.getAttribute('data-react-emoji'));
+  });
+}
+
+function wireUploadZone(zoneId, inputId, onFile){
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  if(!zone || !input) return;
+  zone.onclick = ()=> input.click();
+  input.onchange = ()=>{ if(input.files && input.files[0]) readFileAsDataUrl(input.files[0], onFile); };
+  zone.ondragover = (e)=>{ e.preventDefault(); zone.classList.add('dragover'); };
+  zone.ondragleave = ()=> zone.classList.remove('dragover');
+  zone.ondrop = (e)=>{
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) readFileAsDataUrl(e.dataTransfer.files[0], onFile);
+  };
+}
+function insertMention(username){
+  const el = document.getElementById('composer-input');
+  if(!el) return;
+  const v = el.value;
+  const cursorPos = el.selectionStart;
+  const upto = v.slice(0, cursorPos);
+  const m = upto.match(/(?:^|\s)@(\w*)$/);
+  if(!m) return;
+  const atIdx = cursorPos - m[1].length - 1;
+  const newVal = v.slice(0, atIdx) + '@' + username + ' ' + v.slice(cursorPos);
+  const newPos = atIdx + username.length + 2;
+  el.value = newVal;
+  el.focus();
+  el.setSelectionRange(newPos, newPos);
+  state._mentionQuery = null;
+  render();
+}
+function val(id){ const el = document.getElementById(id); return el ? el.value : ''; }
+function addEnterKey(id, fn){
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') fn(); });
+}
+
+render();
+</script>
+</body>
+</html>
